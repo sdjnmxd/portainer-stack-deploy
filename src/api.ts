@@ -22,6 +22,7 @@ type UpdateStackBody = {
   stackFileContent: string
   prune: boolean
   pullImage: boolean
+  repullImageAndRedeploy: boolean
 }
 
 export class PortainerApi {
@@ -38,13 +39,18 @@ export class PortainerApi {
   }
 
   async getStacks(endpointId?: number): Promise<StackData[]> {
-    const params = endpointId ? { filters: JSON.stringify({ EndpointId: endpointId }) } : undefined
+    // Portainer 2.45 的 filter 键名是 EndpointID（旧版为 EndpointId，写错会静默返回全部环境的 stack）
+    const params = endpointId ? { filters: JSON.stringify({ EndpointID: endpointId }) } : undefined
     const { data } = await this.axiosInstance.get<StackData[]>('/stacks', { params })
     return data
   }
 
   async createStack(params: CreateStackParams, body: CreateStackBody): Promise<void> {
-    await this.axiosInstance.post('/stacks', body, { params: params })
+    // Portainer 2.45 移除了 POST /stacks，改为 /stacks/create/{type}/{method}
+    const type = params.type === 1 ? 'swarm' : 'standalone'
+    await this.axiosInstance.post(`/stacks/create/${type}/${params.method}`, body, {
+      params: { endpointId: params.endpointId }
+    })
   }
 
   async updateStack(id: number, params: UpdateStackParams, body: UpdateStackBody): Promise<void> {

@@ -33,5 +33,5 @@ inputs:
     description: 'The URI of the container image to insert into the stack definition, eg. docker.pkg.github.com/username/repo/master'
 
 runs:
-  using: 'node12'
+  using: 'node20'
   main: 'dist/index.js'
